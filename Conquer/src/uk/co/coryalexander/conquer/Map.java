@@ -1,6 +1,7 @@
 package uk.co.coryalexander.conquer;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -18,9 +19,17 @@ public class Map extends Canvas {
 
     private ArrayList<ActionButton> buttons;
 
-    private int reinforcements;
+    private int reinforcements1, reinforcements2;
 
     private boolean turnOver;
+
+    private ActionButton endTurn;
+
+    private boolean player;
+
+    private String turnString = "Player 2's Turn!";
+
+    private int turnX, turnY;
 
     public Map() {
         init();
@@ -34,7 +43,11 @@ public class Map extends Canvas {
             e.printStackTrace();
         }
         buttons = new ArrayList<ActionButton>();
-        reinforcements = 10;
+        reinforcements1 = 10;
+        reinforcements2 = 10;
+        endTurn = new ActionButton("END TURN", 1100, 650, 100, 25, null);
+        endTurn.setVisible(true);
+        buttons.add(endTurn);
         addMouseListener(new MouseHandler(this));
 
         graph = new Graph();
@@ -99,23 +112,85 @@ public class Map extends Canvas {
             v.render(g);
         }
 
+        g.setColor(new Color(69, 74 ,84));
+        g.fillRect(1000, 575, 280, 120);
+        g.setColor(Color.WHITE);
+        g.drawString("Reinforcements: " + (!player ? reinforcements1 : reinforcements2), 1100, 630);
+        g.drawString((!player ? "Player 1" : "Player 2"), 1100, 600);
+
         if (selected != null) {
             for(ActionButton button : buttons) {
-                if(button.isVisible()) button.render(g);
+                if(button.isVisible() && !button.getName().equals("END TURN")) button.render(g);
             }
         }
 
-        g.drawString("Reinforcements: " + reinforcements, 1100, 20);
-            bufferStrategy.show();
+        endTurn.render(g);
+
+        g.setFont(new Font("Arial", Font.BOLD, 72));
+        g.drawString(turnString, turnX - 300, turnY);
+
+
+        bufferStrategy.show();
 
     }
 
     public void nextTurn() {
+
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         for(Vertex v : graph.getVertices()) {
             if(v.isPlayerOwned()) {
-                reinforcements++;
+                if(!player) reinforcements1++;
+                if(player) reinforcements2++;
+                v.setPlayerOwned(false);
+            }else{
+                v.setPlayerOwned(true);
             }
+
+
         }
+
+        boolean win = true;
+        for(Vertex v : graph.getVertices()) {
+            if(!player) {
+                if(v.isPlayerOwned()) {
+                    win = false;
+                    break;
+                }
+            }
+
+            if(player) {
+                if(!v.isPlayerOwned()) {
+                    win = false;
+                    break;
+                }
+            }
+
+            if(win) {
+                turnString = (!player ? "PLAYER 1 WINS!!!" : "PLAYER 2 WINS!!!");
+                JOptionPane.showMessageDialog(this, turnString);
+                System.exit(0);
+            }
+
+
+        }
+        setSelected(null);
+        player = !player;
+        turnX = Values.windowWidth / 2;
+        turnY = Values.windowHeight /2;
+        turnString = (!player ? "Player 1's Turn!" : "Player 2's Turn");
+
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+       turnString = "";
 
         setTurnOver(false);
     }
@@ -152,12 +227,20 @@ public class Map extends Canvas {
         this.buttons = buttons;
     }
 
-    public int getReinforcements() {
-        return reinforcements;
+    public int getReinforcements1() {
+        return reinforcements1;
     }
 
-    public void setReinforcements(int reinforcements) {
-        this.reinforcements = reinforcements;
+    public void setReinforcements1(int reinforcements1) {
+        this.reinforcements1 = reinforcements1;
+    }
+
+    public int getReinforcements2() {
+        return reinforcements2;
+    }
+
+    public void setReinforcements2(int reinforcements2) {
+        this.reinforcements2 = reinforcements2;
     }
 
     public boolean isTurnOver() {
@@ -167,5 +250,9 @@ public class Map extends Canvas {
     public void setTurnOver(boolean turnOver) {
         this.turnOver = turnOver;
         if(turnOver == true) nextTurn();
+    }
+
+    public boolean isPlayer() {
+        return player;
     }
 }

@@ -34,39 +34,57 @@ public class MouseHandler implements MouseListener {
         for(ActionButton button : map.getButtons()) {
             if(e.getX() >= button.getX() && e.getX() <= button.getX() + button.getWidth() && e.getY() >= button.getY() && e.getY() <= button.getY() + button.getHeight()) {
                 if(button.isVisible()) {
-                    if(button.getName().equals("MOVE")) {
-                        if(map.getSelected().getArmyCount() > 1) {
-                            map.getSelected().setArmyCount(map.getSelected().getArmyCount() - 1);
-                            button.getAssociatedVertex().setArmyCount(button.getAssociatedVertex().getArmyCount() + 1);
-                        }
-                        map.setTurnOver(true);
 
-                    }
+                    switch(button.getName()) {
+                        case "MOVE":
+                            if (map.getSelected().getArmyCount() > 1) {
+                                map.getSelected().setArmyCount(map.getSelected().getArmyCount() - 1);
+                                button.getAssociatedVertex().setArmyCount(button.getAssociatedVertex().getArmyCount() + 1);
+                            }
+                            break;
+                        case "ATTACK":
+                            double attackForce, defendForce, chance, roll;
 
-                    if(button.getName().equals("ATTACK")) {
-                        int attackForce, defendForce, chance, roll;
+                            attackForce = map.getSelected().getArmyCount();
+                            defendForce = button.getAssociatedVertex().getArmyCount();
 
-                        attackForce = map.getSelected().getArmyCount();
-                        defendForce = button.getAssociatedVertex().getArmyCount();
+                            int size = (int) Math.floor(attackForce + defendForce);
 
-                        chance = new Random().nextInt(attackForce + defendForce);
+                            chance = new Random().nextInt(size);
 
-                        if(chance < attackForce) {
-
-                        } else {
-
-                        }
-                        map.setTurnOver(true);
-
-                    }
-
-                    if(button.getName().equals("REINFORCE")) {
-                        if(map.getReinforcements() > 0) {
-                            map.getSelected().setArmyCount(map.getSelected().getArmyCount() + 1);
-                            map.setReinforcements(map.getReinforcements()-1);
+                            if (chance < attackForce) {
+                                System.out.println(attackForce / (attackForce + defendForce));
+                                attackForce *= attackForce / (attackForce + defendForce);
+                                System.out.println(attackForce);
+                                button.getAssociatedVertex().setArmyCount((int) Math.floor(attackForce));
+                                button.getAssociatedVertex().setPlayerOwned(true);
+                                map.getSelected().setArmyCount(1);
+                                map.setSelected(button.getAssociatedVertex());
+                            } else {
+                                defendForce *= defendForce / (attackForce + defendForce);
+                                map.getSelected().setArmyCount((int) Math.floor(defendForce));
+                                map.getSelected().setPlayerOwned(false);
+                                button.getAssociatedVertex().setArmyCount(1);
+                                map.setSelected(null);
+                            }
                             map.setTurnOver(true);
-
-                        }
+                            break;
+                        case "REINFORCE":
+                            if(!map.isPlayer()) {
+                                if (map.getReinforcements1() > 0) {
+                                    map.getSelected().setArmyCount(map.getSelected().getArmyCount() + 1);
+                                    map.setReinforcements1(map.getReinforcements1() - 1);
+                                }
+                            } else {
+                                if (map.getReinforcements2() > 0) {
+                                    map.getSelected().setArmyCount(map.getSelected().getArmyCount() + 1);
+                                    map.setReinforcements2(map.getReinforcements2() - 1);
+                                }
+                            }
+                            break;
+                        case "END TURN":
+                            map.setTurnOver(true);
+                            break;
                     }
                     pressingButton = true;
                 }
@@ -80,7 +98,7 @@ public class MouseHandler implements MouseListener {
         }
 
         for(ActionButton button : map.getButtons()) {
-           button.setVisible(false);
+           if(!button.getName().equals("END TURN")) button.setVisible(false);
         }
         if(map.getSelected() != null) {
             ActionButton reinforce = new ActionButton("REINFORCE", map.getSelected().getX() + map.getSelected().getSize() + 10,map.getSelected().getY(), 125, 25, map.getSelected());
