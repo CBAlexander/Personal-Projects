@@ -119,8 +119,8 @@ public class Map extends Canvas {
         g.drawString((!player ? "Player 1" : "Player 2"), 1100, 600);
 
         if (selected != null) {
-            for(ActionButton button : buttons) {
-                if(button.isVisible() && !button.getName().equals("END TURN")) button.render(g);
+            for(int i = 0; i < buttons.size(); i++) {
+                if(buttons.get(i).isVisible() && !buttons.get(i).getName().equals("END TURN")) buttons.get(i).render(g);
             }
         }
 
@@ -135,12 +135,19 @@ public class Map extends Canvas {
     }
 
     public void nextTurn() {
-
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        boolean win = true;
+        for(Vertex v : graph.getVertices()) {
+           if(!v.isPlayerOwned()) {
+               win = false;
+           }
         }
+
+        if(win) {
+            System.out.println("winner " + (player ? "player 2" : "player 1"));
+            JOptionPane.showMessageDialog(this, (player ? "Player 2" : "Player 1") + " wins!!!");
+            System.exit(0);
+        }
+
         for(Vertex v : graph.getVertices()) {
             if(v.isPlayerOwned()) {
                 if(!player) reinforcements1++;
@@ -153,30 +160,6 @@ public class Map extends Canvas {
 
         }
 
-        boolean win = true;
-        for(Vertex v : graph.getVertices()) {
-            if(!player) {
-                if(v.isPlayerOwned()) {
-                    win = false;
-                    break;
-                }
-            }
-
-            if(player) {
-                if(!v.isPlayerOwned()) {
-                    win = false;
-                    break;
-                }
-            }
-
-            if(win) {
-                turnString = (!player ? "PLAYER 1 WINS!!!" : "PLAYER 2 WINS!!!");
-                JOptionPane.showMessageDialog(this, turnString);
-                System.exit(0);
-            }
-
-
-        }
         setSelected(null);
         player = !player;
         turnX = Values.windowWidth / 2;
